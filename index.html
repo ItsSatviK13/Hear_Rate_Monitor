@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heartbeat Monitor</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        h1 { color: red; }
+        .data-box { font-size: 24px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Live Heart Monitor</h1>
+    <div class="data-box">
+        <p><strong>BPM:</strong> <span id="bpm">Loading...</span></p>
+        <p><strong>SpO₂:</strong> <span id="spo2">Loading...</span>%</p>
+    </div>
+
+    <script>
+        async function fetchData() {
+            let port = await navigator.serial.requestPort();  // Request Serial Port
+            await port.open({ baudRate: 115200 });
+
+            let decoder = new TextDecoderStream();
+            port.readable.pipeTo(decoder.writable);
+            let reader = decoder.readable.getReader();
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                let data = value.trim().split(",");
+                if (data.length === 2) {
+                    document.getElementById('bpm').innerText = data[0] || 'N/A';
+                    document.getElementById('spo2').innerText = data[1] || 'N/A';
+                }
+            }
+        }
+
+        fetchData();
+    </script>
+</body>
+</html>
